@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luyện Tập Viết Lại Câu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #0056b3;
+            margin-bottom: 20px;
+        }
+        .exercise-area {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .question-item {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .original-sentence {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .answer-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .correct-answer {
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 5px;
+            display: none;
+            text-align: left;
+        }
+        .results {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-top: 20px;
+            display: none;
+        }
+        .button-group {
+            margin-top: 20px;
+        }
+        .button-group button {
+            padding: 12px 25px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        #check-button {
+            background-color: #007bff;
+        }
+        #check-button:hover {
+            background-color: #0056b3;
+        }
+        #new-button {
+            background-color: #28a745;
+        }
+        #new-button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Luyện Tập Viết Lại Câu</h1>
+    <div id="exercise-questions" class="exercise-area">
+        </div>
+    <div class="button-group">
+        <button id="check-button">Kiểm Tra</button>
+        <button id="new-button">Bài Mới</button>
+    </div>
+    <div id="results" class="results">
+        </div>
+</div>
+
+<script>
+    const webAppUrl = 'https://script.google.com/macros/s/AKfycbwpbiAZGLOMNOCJv3PkiismZDXWlBWFJdlOLcBccS6RdPlwQwo6aT2KPZ774c6kCv5R/exec'; // Thay thế URL này bằng URL của bạn
+    let allData = [];
+
+    async function fetchData() {
+        try {
+            const response = await fetch(webAppUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            allData = await response.json();
+            console.log('Data fetched successfully:', allData);
+            generateNewExercise();
+        } catch (error) {
+            console.error('Could not fetch data:', error);
+            document.getElementById('exercise-questions').innerHTML = '<p style="color:red; text-align:center;">Không thể tải dữ liệu. Vui lòng kiểm tra lại URL hoặc kết nối mạng.</p>';
+        }
+    }
+
+    function generateNewExercise() {
+        const questionsContainer = document.getElementById('exercise-questions');
+        const resultsDiv = document.getElementById('results');
+        questionsContainer.innerHTML = '';
+        resultsDiv.style.display = 'none';
+
+        if (allData.length === 0) {
+            questionsContainer.innerHTML = '<p style="text-align:center;">Đang tải dữ liệu...</p>';
+            fetchData();
+            return;
+        }
+
+        let shuffledData = [...allData];
+        for (let i = shuffledData.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledData[i], shuffledData[j]] = [shuffledData[j], shuffledData[i]];
+        }
+
+        const selectedQuestions = shuffledData.slice(0, 10);
+
+        selectedQuestions.forEach((item, index) => {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-item';
+            questionDiv.innerHTML = `
+                <p class="original-sentence">${index + 1}. ${item.question}</p>
+                <input type="text" class="answer-input" data-correct-answer="${item.answer}">
+                <div class="correct-answer">Đáp án đúng: ${item.answer}</div>
+            `;
+            questionsContainer.appendChild(questionDiv);
+        });
+    }
+
+    function checkAnswers() {
+        const answerInputs = document.querySelectorAll('.answer-input');
+        let score = 0;
+
+        answerInputs.forEach((input) => {
+            const userAnswer = input.value.trim();
+            const correctAnswer = input.getAttribute('data-correct-answer').trim();
+            const parentDiv = input.closest('.question-item');
+            const correctAnswerDiv = parentDiv.querySelector('.correct-answer');
+
+            correctAnswerDiv.style.display = 'block';
+
+            if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                score++;
+                input.style.border = '2px solid #28a745';
+            } else {
+                input.style.border = '2px solid #dc3545';
+            }
+        });
+
+        displayResults(score);
+    }
+
+    function displayResults(score) {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.textContent = `Bạn đã đạt ${score}/10 điểm.`;
+        resultsDiv.style.display = 'block';
+    }
+
+    // Gắn sự kiện cho các nút
+    document.getElementById('check-button').addEventListener('click', checkAnswers);
+    document.getElementById('new-button').addEventListener('click', generateNewExercise);
+
+    // Lần đầu tải trang
+    document.addEventListener('DOMContentLoaded', fetchData);
+</script>
+
+</body>
+</html>
